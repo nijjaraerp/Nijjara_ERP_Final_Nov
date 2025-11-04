@@ -1,0 +1,9 @@
+# Node / build
+node_modules/
+dist/
+
+# macOS
+.DS_Store
+
+# clasp credentials (do NOT commit)
+.clasprc.json
