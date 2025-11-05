@@ -20,14 +20,6 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Restore clasp auth
-        env:
-          CLASP_CREDENTIALS: ${{ secrets.CLASP_CREDENTIALS }}
-        run: |
-          mkdir -p $HOME
-          echo "$CLASP_CREDENTIALS" > $HOME/.clasprc.json
-          chmod 600 $HOME/.clasprc.json
-
       - name: Install clasp
         run: npm install -g @google/clasp
 
