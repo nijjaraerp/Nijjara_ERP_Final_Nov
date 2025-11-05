@@ -23,8 +23,21 @@ jobs:
       - name: Install clasp
         run: npm install -g @google/clasp
 
+      - name: Configure clasp credentials
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          if [ -z "$CLASPRC_JSON" ]; then
+            echo "Missing CLASPRC_JSON secret" >&2
+            exit 1
+          fi
+          # write the secret to the expected global location for clasp
+          echo "$CLASPRC_JSON" > ~/.clasprc.json
+          chmod 600 ~/.clasprc.json
+          echo "Wrote ~/.clasprc.json"
+
       - name: Push to Apps Script
         run: |
-          # Ensure .clasp.json in repo contains the correct scriptId
+          # show which script id will be pushed (repo .clasp.json) for debugging
           cat .clasp.json
           clasp push --force
