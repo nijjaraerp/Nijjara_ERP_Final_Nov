@@ -1,4 +1,4 @@
-name: Deploy to Apps Script
+name: Deploy to Apps Script (service-account)
 on:
   push:
     branches:
@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   deploy:
-    name: Deploy to Apps Script
+    name: Deploy to Apps Script (service-account)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,21 +23,30 @@ jobs:
       - name: Install clasp
         run: npm install -g @google/clasp
 
-      - name: Configure clasp credentials
+      - name: Write service-account credentials
         env:
-          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          CLASP_CREDS_JSON: ${{ secrets.CLASP_CREDS_JSON }}
         run: |
-          if [ -z "$CLASPRC_JSON" ]; then
-            echo "Missing CLASPRC_JSON secret" >&2
+          set -euo pipefail
+          if [ -z "${CLASP_CREDS_JSON:-}" ]; then
+            echo "Error: CLASP_CREDS_JSON secret is not set" >&2
             exit 1
           fi
-          # write the secret to the expected global location for clasp
-          echo "$CLASPRC_JSON" > ~/.clasprc.json
-          chmod 600 ~/.clasprc.json
-          echo "Wrote ~/.clasprc.json"
+          printf '%s' "$CLASP_CREDS_JSON" > /tmp/clasp-service-creds.json
+          chmod 600 /tmp/clasp-service-creds.json
+          echo "Wrote /tmp/clasp-service-creds.json"
+
+      - name: Login with service account
+        run: |
+          set -euo pipefail
+          # Use the service account key to authenticate clasp non-interactively
+          clasp login --creds /tmp/clasp-service-creds.json
+          # Verify authentication so logs show the authenticated account
+          clasp whoami
 
       - name: Push to Apps Script
         run: |
-          # show which script id will be pushed (repo .clasp.json) for debugging
-          cat .clasp.json
+          set -euo pipefail
+          echo "Project .clasp.json (debug):"
+          cat .clasp.json || true
           clasp push --force
